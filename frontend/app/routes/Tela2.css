@@ -1,45 +1,31 @@
-.back-button {
+/* Em Tela2.css */
+
+.tela2-container {
   display: flex;
-  justify-content: flex-start; /* força ficar à esquerda */
-  margin-top: 20px;
+  flex-direction: column; /* Coloca o cabeçalho e o conteúdo principal um abaixo do outro */
 }
 
-body, html {
-  margin: 0;
-  padding: 0;
-  background-color: #0d1117;
-  color: #c9d1d9;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  height: 100%; /* Garante que o body ocupe a altura total da tela */
-}
-
-.home-container {
+/* Novo container para centralizar o conteúdo principal */
+.main-content-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: center; /* Centraliza o conteúdo horizontalmente */
   padding: 20px;
-  min-height: 100vh; /* Garante que o container ocupe a altura total da viewport */
 }
 
 .main-content-row {
   display: flex;
-  flex-direction: row;
+  flex-direction: row; /* Força os elementos a ficarem na mesma linha */
+  /* Remova a propriedade flex-wrap: wrap; */
   width: 100%;
   max-width: 1200px;
   gap: 20px;
-  align-items: stretch; /* Essencial: faz com que os filhos (vídeo e texto) se estiquem para a mesma altura */
+  align-items: flex-start; /* Alinha os itens no topo */
 }
 
-/* Opcional: Garanta que o vídeo tenha uma altura flexível */
-.video-container {
-  width: 60%;
-}
-
-.text-container {
-  flex: 1; /* ocupa o espaço restante ao lado do vídeo */
-  padding: 1rem;
-  background-color: #161b22;
-  border-radius: 0.5rem;
-  overflow-wrap: break-word; /* força a quebra se a palavra for muito longa */
-  word-break: break-word; /* quebra no meio se não houver espaço */
-  white-space: pre-wrap; /* mantém quebras de linha do texto original e cria novas quando precisar */
+/* Adicione um media query para telas menores, se necessário */
+@media (max-width: 767px) {
+  .main-content-row {
+    flex-direction: column;
+    align-items: left;
+  }
 }
