@@ -46,7 +46,9 @@ function TextContainer({
               onClick={() => onSelectAfirmacao?.(afirmacao)}
             >
               {afirmacao.quote}{" "}
-              <span className="timestamp">{formatSpan(afirmacao.span)}</span>
+              <span className="timestamp">
+                {formatSpan(afirmacao.span_hms)}
+              </span>
             </button>
           ))}
         </div>

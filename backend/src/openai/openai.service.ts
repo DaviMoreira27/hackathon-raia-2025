@@ -49,9 +49,12 @@ export class OpenaiService {
   private readonly log = new Logger(OpenaiService.name);
   private clientPromise: Promise<any> | null = null; // import dinâmico do SDK
   private readonly model: string;
+  private readonly researchModel: string;
 
   constructor(private readonly cfg: ConfigService) {
     this.model = cfg.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
+    this.researchModel =
+      cfg.get<string>('OPENAI_MODEL_RESEARCH') || 'gpt-5-mini';
   }
 
   /** formata segundos -> "HH:MM:SS.mmm" (troque para withMs=false se não quiser milissegundos) */
@@ -333,7 +336,7 @@ Texto com timestamps:`;
     const client = await this.getClient();
 
     const completion = await client.chat.completions.create({
-      model: this.model,
+      model: this.researchModel,
       temperature: 1,
       messages: [
         { role: 'system', content: prompt },

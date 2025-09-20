@@ -1,11 +1,10 @@
 // Tela2.tsx
 
 import React, { useEffect, useState } from "react";
-import Header from "./Header";
+import Header, { type FactContext } from "./Header";
 import VideoContainer from "./VideoContainer";
 import TextContainers, { type FactualMoment } from "./TextContainer";
 import "./Tela2.css";
-import type { FactContext } from "./ContentBlock";
 
 function getYouTubeId(url: string): string | null {
   const regExp =
@@ -20,6 +19,7 @@ function Tela2() {
   const [factualData, setFactualData] = useState<FactualMoment[]>([]);
   const [contextData, setCtxData] = useState<FactContext[]>([]);
   const [selected, setSelected] = useState<FactualMoment | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleUrlSubmit = (url: string) => {
     const newVideoId = getYouTubeId(url);
@@ -38,6 +38,7 @@ function Tela2() {
   useEffect(() => {
     const fetchContext = async () => {
       try {
+        setLoading(true);
         const response = await fetch("http://localhost:3000/openai/test/info", {
           method: "POST",
           headers: {
@@ -46,13 +47,15 @@ function Tela2() {
           body: JSON.stringify({ facts: selected }),
         });
 
+        setLoading(false);
         if (!response.ok) {
-          throw new Error("Erro na requisição");
+          throw new Error("Erro na requisiçsetLoadingão");
         }
 
         const data: FactContext[] = await response.json();
         setCtxData((data as any).information);
       } catch (err) {
+        setLoading(false);
         console.error("Erro ao buscar contexto:", err);
         setCtxData([]);
       }
@@ -68,7 +71,18 @@ function Tela2() {
 
   return (
     <div className="tela2-container">
-      <Header onUrlSubmit={handleUrlSubmit} setTranscript={handleTranscript} />
+      <Header
+        onUrlSubmit={handleUrlSubmit}
+        setTranscript={handleTranscript}
+        setLoading={setLoading}
+      />
+
+      {/* Loader overlay */}
+      {loading && (
+        <div className="loader-overlay">
+          <div className="loader"></div>
+        </div>
+      )}
 
       <div className="main-content-wrapper">
         <div className="main-content-row">

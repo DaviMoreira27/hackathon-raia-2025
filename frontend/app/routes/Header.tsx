@@ -22,10 +22,11 @@ export type FactContext = {
 interface HeaderProps {
   onUrlSubmit: (url: string) => void;
   setTranscript: (data: FactualMoment[]) => void;
+  setLoading: (loading: boolean) => void; // NOVO
 }
 
 // A ÚNICA definição do componente Header
-function Header({ onUrlSubmit, setTranscript }: HeaderProps) {
+function Header({ onUrlSubmit, setTranscript, setLoading }: HeaderProps) {
   const [url, setUrl] = useState<string>("");
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -33,6 +34,7 @@ function Header({ onUrlSubmit, setTranscript }: HeaderProps) {
     onUrlSubmit(url);
 
     try {
+      setLoading(true); // começa o loader
       const response = await fetch(
         "http://localhost:3000/openai/facts/sections",
         {
@@ -50,8 +52,10 @@ function Header({ onUrlSubmit, setTranscript }: HeaderProps) {
 
       const data: FactualMoment[] = await response.json();
       setTranscript(data);
-    } catch (err) {
+    } catch (err: any) {
       throw new Error(err.message ?? "Or not");
+    } finally {
+      setLoading(false); // encerra o loader, sucesso ou erro
     }
   };
 
