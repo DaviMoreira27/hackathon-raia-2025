@@ -1,11 +1,11 @@
 .content-block {
-  background-color: #34e481;
+  background-color: #ffffff;
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   width: 100%;
-  height: 300px; /* altura fixa visível */
+  height: 250px; /* altura fixa visível */
   overflow-y: auto; /* scroll aparece quando o texto for maior que 300px */
   word-break: break-word;
   line-height: 1.5;
