@@ -8,5 +8,6 @@ import { ConfigModule } from '@nestjs/config';
   imports: [HttpModule, ConfigModule],
   providers: [YoutubeService],
   controllers: [YoutubeController],
+  exports: [YoutubeService],
 })
 export class YoutubeModule {}

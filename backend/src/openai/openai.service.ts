@@ -7,6 +7,7 @@ export interface TranscriptItem {
   end: number;
   text: string;
 }
+
 export interface Sections {
   sectionCount: number;
   sections: Array<{
@@ -27,12 +28,12 @@ export type TranscriptSegment = {
 
 export type FactualMoment = {
   // canônicos para lógica/seek
-  t: number;                       // segundo inicial (inteiro, arredondado p/ baixo)
-  span?: [number, number];         // [start_s, end_s]
+  t: number; // segundo inicial (inteiro, arredondado p/ baixo)
+  span?: [number, number]; // [start_s, end_s]
 
   // friendly display
-  t_hms: string;                   // "HH:MM:SS.mmm"
-  span_hms?: [string, string];     // ["HH:MM:SS.mmm","HH:MM:SS.mmm"]
+  t_hms: string; // "HH:MM:SS.mmm"
+  span_hms?: [string, string]; // ["HH:MM:SS.mmm","HH:MM:SS.mmm"]
 
   // conteúdo
   quote: string;
@@ -42,7 +43,7 @@ export type FactualMoment = {
 @Injectable()
 export class OpenaiService {
   private readonly log = new Logger(OpenaiService.name);
-  private clientPromise: Promise<any> | null = null;   // import dinâmico do SDK
+  private clientPromise: Promise<any> | null = null; // import dinâmico do SDK
   private readonly model: string;
 
   constructor(private readonly cfg: ConfigService) {
@@ -55,29 +56,25 @@ export class OpenaiService {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = Math.floor(s % 60);
-    const base =
-      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    const base = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     if (!withMs) return base;
     const ms = Math.round((s - Math.floor(s)) * 1000);
-    return `${base}.${String(ms).padStart(3,'0')}`;
+    return `${base}.${String(ms).padStart(3, '0')}`;
   }
 
-  /** Converte o objeto Sections (YouTube) em uma lista linear de segments */
-  private sectionsToSegments(data: Sections): TranscriptSegment[] {
-    if (!data?.sections?.length) return [];
-    const out: TranscriptSegment[] = [];
-    for (const s of data.sections) {
-      for (const t of s.transcripts || []) {
-        out.push({
-          start: Number(t.start || 0),
-          end: Number(t.end ?? t.start ?? 0),
-          text: String(t.text || ''),
-          section: Number(s.section ?? 0),
-        });
-      }
-    }
-    // ordena/dedup leve
+  private sectionsToSegments(items: TranscriptItem[]): TranscriptSegment[] {
+    if (!items?.length) return [];
+
+    const out: TranscriptSegment[] = items.map((t) => ({
+      start: Number(t.start ?? 0),
+      end: Number(t.end ?? t.start ?? 0),
+      text: String(t.text ?? ''),
+      section: 0, // ou undefined, se não houver seção
+    }));
+
+    // Ordena os segmentos pelo início e fim
     out.sort((a, b) => a.start - b.start || a.end - b.end);
+
     return out;
   }
 
@@ -108,7 +105,7 @@ export class OpenaiService {
 
   /** Extrai momentos com alegações factuais a partir do formato Sections do YouTube */
   async findFactualMomentsFromSections(
-    data: Sections,
+    data: TranscriptItem[],
     language: 'pt' | 'en' = 'pt',
   ): Promise<FactualMoment[]> {
     const segments = this.sectionsToSegments(data);
@@ -130,55 +127,62 @@ export class OpenaiService {
       )
       .join('\n');
 
-// 1) Regras do sistema — agora exigindo span sempre presente
-const system =
-  language === 'pt'
-    ? `Você extrairá APENAS afirmações factuais verificáveis (ex.: números, datas, eventos objetivos, afirmações categóricas) de uma transcrição com timestamps.
-- Ignore opiniões e juízos de valor.
-- Aponte o segundo inicial (inteiro) quando possível.
-- SEMPRE inclua "span": [start,end] em segundos (números). Se o fim não for claro, use end = start.
-- Seja parcimonioso.`
-    : `You will extract ONLY verifiable factual claims from a timestamped transcript.
-- Ignore opinions/values.
-- Provide the starting second (integer) when possible.
-- ALWAYS include "span": [start,end] in seconds (numbers). If end is unclear, set end = start.
-- Be parsimonious.`;
+    // 1) Regras do sistema — agora exigindo span sempre presente
+    const system =
+      language === 'pt'
+        ? `Você extrairá APENAS afirmações factuais verificáveis de uma transcrição com timestamps. Para cada fato, inclua TODO o contexto em volta fornecido na transcrição, mesmo que seja mais amplo, incluindo números, datas, eventos objetivos, afirmações categóricas e qualquer informação relevante que ajude a compreender o fato.
+    - Ignore opiniões e juízos de valor.
+    - Aponte o segundo inicial (inteiro) quando possível.
+    - SEMPRE inclua "span": [start,end] em segundos (números). Se o fim não for claro, use end = start.
+    - Seja completo, mas conciso, e garanta que o JSON reflita todo o contexto.`
+        : `You will extract ONLY verifiable factual claims from a timestamped transcript. For each fact, include ALL surrounding context provided in the transcript, even if broader, including numbers, dates, objective events, categorical statements, and any relevant information that helps understand the fact.
+    - Ignore opinions/values.
+    - Provide the starting second (integer) when possible.
+    - ALWAYS include "span": [start,end] in seconds (numbers). If end is unclear, set end = start.
+    - Be thorough yet concise, ensuring the JSON captures the full context.`;
 
-const jsonSchema = {
-  name: 'FactualMoments',
-  schema: {
-    type: 'object',
-    additionalProperties: false,
-    properties: {
-      moments: {
-        type: 'array',
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          properties: {
-            t: { type: 'number' },
-            quote: { type: 'string' },
-            kind: {
-              type: 'string',
-              enum: ['quantitative', 'event', 'causal', 'categorical', 'other'],
-            },
-            span: {
-              type: 'array',
-              items: { type: 'number' },
-              minItems: 2,
-              maxItems: 2,
+    const jsonSchema = {
+      name: 'FactualMoments',
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          moments: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                t: { type: 'number' },
+                quote: { type: 'string' },
+                kind: {
+                  type: 'string',
+                  enum: [
+                    'quantitative',
+                    'event',
+                    'causal',
+                    'categorical',
+                    'other',
+                  ],
+                },
+                span: {
+                  type: 'array',
+                  items: { type: 'number' },
+                  minItems: 2,
+                  maxItems: 2,
+                },
+              },
+
+              required: ['t', 'quote', 'kind', 'span'],
             },
           },
-          
-          required: ['t', 'quote', 'kind', 'span'],
         },
+        required: ['moments'],
       },
-    },
-    required: ['moments'],
-  },
-  strict: true,
-} as const;
+      strict: true,
+    } as const;
 
+    console.log('JOINED', joined);
 
     const user =
       language === 'pt'
@@ -211,30 +215,42 @@ ${joined}`;
     }
 
     const moments: FactualMoment[] = Array.isArray(parsed?.moments)
-    ? parsed.moments.map((m: any) => {
-        // números canônicos
-        const tNum   = Number(m.t ?? 0);
-        const startS = Array.isArray(m.span) ? Number(m.span[0]) : tNum;
-        const endS   = Array.isArray(m.span) ? Number(m.span[1]) : startS;
+      ? parsed.moments.map((m: any) => {
+          // números canônicos
+          const tNum = Number(m.t ?? 0);
+          const startS = Array.isArray(m.span) ? Number(m.span[0]) : tNum;
+          const endS = Array.isArray(m.span) ? Number(m.span[1]) : startS;
 
-        const tInt   = Math.max(0, Math.floor(Number.isFinite(tNum) ? tNum : startS));
+          const tInt = Math.max(
+            0,
+            Math.floor(Number.isFinite(tNum) ? tNum : startS),
+          );
 
-        // strings para exibição
-        const t_hms = this.toHMS(startS, true);
-        const span_hms: [string, string] = [this.toHMS(startS, true), this.toHMS(endS, true)];
+          // strings para exibição
+          const t_hms = this.toHMS(startS, true);
+          const span_hms: [string, string] = [
+            this.toHMS(startS, true),
+            this.toHMS(endS, true),
+          ];
 
-        return {
+          return {
             t: tInt,
             t_hms,
             span: [startS, endS],
             span_hms,
             quote: String(m.quote || '').slice(0, 400),
-            kind: (['quantitative', 'event', 'causal', 'categorical', 'other'].includes(m.kind)
-            ? m.kind
-            : 'other') as FactualMoment['kind'],
-        };
+            kind: ([
+              'quantitative',
+              'event',
+              'causal',
+              'categorical',
+              'other',
+            ].includes(m.kind)
+              ? m.kind
+              : 'other') as FactualMoment['kind'],
+          };
         })
-    : [];
+      : [];
 
     return moments.sort((a, b) => a.t - b.t);
   }
