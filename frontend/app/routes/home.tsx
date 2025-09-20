@@ -1,13 +1,11 @@
-import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import React from "react";
+import "./home.css";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
-
-export default function Home() {
-  return <Welcome />;
+function Home(){
+  return(
+    <div>
+      <h1>Insira seu URL do YouTube no espaço abaixo!</h1>
+      <input type="text" placeholder="Insira seu URL"/>
+    </div>
+  )
 }
