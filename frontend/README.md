@@ -85,3 +85,47 @@ This template comes with [Tailwind CSS](https://tailwindcss.com/) already config
 ---
 
 Built with ❤️ using React Router.
+
+## Estrutura de Diretórios
+
+# 📂 Frontend - Projeto React Router
+
+Este repositório contém a aplicação **frontend** desenvolvida com **React + TypeScript** e o novo sistema de rotas do **React Router v7 (@react-router/dev)**.  
+A estrutura segue a organização baseada em arquivos (`file-based routing`).
+
+---
+
+## 📁 Estrutura de Pastas
+
+```bash
+frontend/
+│
+├── app/                     # Código principal da aplicação
+│   ├── routes/              # Definições de rotas e componentes de página
+│   │   ├── content-manager.css
+│   │   ├── ContentBlock.css
+│   │   ├── ContentBlock.tsx
+│   │   ├── Header.css
+│   │   ├── Header.tsx       # Componente de cabeçalho / navegação
+│   │   ├── home.tsx         # Página inicial (/)
+│   │   ├── Tela2.tsx        # Página Tela 2 (/tela2)
+│   │   ├── Tela2.css
+│   │   ├── TextContainer.tsx
+│   │   ├── TextContainer.css
+│   │   ├── VideoContainer.tsx
+│   │   ├── VideoContainer.css
+│   │   ├── app.css          # Estilos globais
+│   │   ├── root.tsx         # Root layout com <Outlet /> e ErrorBoundary
+│   │   └── routes.ts        # Configuração inicial das rotas
+│   │
+│   └── ...
+│
+├── public/                  # Arquivos estáticos públicos
+│
+├── package.json             # Dependências e scripts npm
+├── react-router.config.ts   # Configurações do React Router
+├── tsconfig.json            # Configuração do TypeScript
+├── Dockerfile               # Configuração para build e deploy com Docker
+├── README.md                # Este arquivo
+└── ...
+
