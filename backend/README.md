@@ -96,3 +96,50 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+# 🎯 Backend - Projeto NestJS
+
+Este repositório contém a aplicação **backend** desenvolvida com [NestJS](https://nestjs.com/) e **TypeScript**, organizada em módulos independentes (OpenAI, YouTube, etc).
+
+---
+
+## 📁 Estrutura de Pastas
+
+```bash
+backend/
+│
+├── dist/                     # Arquivos compilados (TypeScript → JavaScript)
+├── node_modules/             # Dependências instaladas
+│
+├── src/                      # Código-fonte principal
+│   ├── openai/               # Módulo para integração com OpenAI
+│   │   ├── openai.controller.ts
+│   │   ├── openai.module.ts
+│   │   └── openai.service.ts
+│   │
+│   ├── services/             # Serviços compartilhados
+│   │   └── openai/
+│   │       └── services.module.ts
+│   │
+│   ├── youtube/              # Módulo para integração com YouTube
+│   │   ├── proto/            # Definições de mensagens/protocolos
+│   │   ├── youtube.controller.ts
+│   │   ├── youtube.module.ts
+│   │   ├── youtube.service.ts
+│   │   └── youtube.types.ts
+│   │
+│   ├── app.controller.spec.ts # Testes do controlador principal
+│   ├── app.controller.ts      # Controlador principal
+│   ├── app.module.ts          # Módulo raiz
+│   ├── app.service.ts         # Serviço principal
+│   └── main.ts                # Ponto de entrada da aplicação
+│
+├── test/                      # Testes end-to-end
+│
+├── .gitignore
+├── .prettierrc                # Configuração do Prettier
+├── eslint.config.mjs           # Configuração do ESLint
+├── nest-cli.json              # Configuração do Nest CLI
+├── package.json               # Dependências e scripts npm
+├── package-lock.json
+└── README.md                  # Este arquivo
