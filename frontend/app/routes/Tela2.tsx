@@ -1,5 +1,5 @@
-// home.tsx
 
+import { Link } from "react-router-dom";
 import React from 'react';
 import VideoContainer from './VideoContainer';
 import TextContainers from './TextContainer';
@@ -16,7 +16,6 @@ function Tela2() {
   return (
     <div className="home-container">
       <div className="main-content-row">
-        {/* Verifique se a importação e o uso do VideoContainer estão corretos */}
         <VideoContainer videoId={videoId} />
         <TextContainers 
           afirmacoesContent={fakeData.afirmacoes} 
