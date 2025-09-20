@@ -7,10 +7,18 @@ import {
   YoutubeIntegrationResponse,
 } from './youtube.types';
 import proto from './proto/compiled';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class YoutubeService {
-  constructor(private readonly httpService: HttpService) {}
+  private ytKey: string;
+
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly cfg: ConfigService,
+  ) {
+    this.ytKey = cfg.get<string>('YT_KEY') || '';
+  }
 
   async getTranscript(
     videoId: string,
@@ -81,7 +89,7 @@ export class YoutubeService {
 
     try {
       const response$ = this.httpService.post<YoutubeIntegrationResponse>(
-        'https://www.youtube.com/youtubei/v1/get_transcript?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8',
+        `https://www.youtube.com/youtubei/v1/get_transcript?key=${this.ytKey}`,
         request,
       );
       const { data: response } = await firstValueFrom(response$);

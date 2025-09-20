@@ -5,7 +5,7 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [HttpModule, ConfigModule],
+  imports: [HttpModule, ConfigModule.forRoot({ isGlobal: true })],
   providers: [YoutubeService],
   controllers: [YoutubeController],
   exports: [YoutubeService],
