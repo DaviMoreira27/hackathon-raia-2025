@@ -1,0 +1,10 @@
+package apex;
+message Initial {
+  optional string IS_ASR = 1;
+  required string LANGUAGE_INITIALS = 2;
+}
+
+message Final {
+  required string VIDEO_ID = 1;
+  required string LANGUAGE_INITIALS = 2;
+}
