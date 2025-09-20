@@ -27,3 +27,13 @@ body, html {
 .video-container {
   width: 60%;
 }
+
+.text-container {
+  flex: 1; /* ocupa o espaço restante ao lado do vídeo */
+  padding: 1rem;
+  background-color: #161b22;
+  border-radius: 0.5rem;
+  overflow-wrap: break-word; /* força a quebra se a palavra for muito longa */
+  word-break: break-word; /* quebra no meio se não houver espaço */
+  white-space: pre-wrap; /* mantém quebras de linha do texto original e cria novas quando precisar */
+}
