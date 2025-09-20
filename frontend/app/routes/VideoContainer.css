@@ -1,0 +1,18 @@
+.video-container {
+  width: 100%;
+  padding-top: 56.25%; /* Proporção 16:9 (altura/largura) */
+  position: relative;
+  background-color: #000;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.video-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}

@@ -1,0 +1,30 @@
+// home.tsx
+
+import React from 'react';
+import VideoContainer from './VideoContainer';
+import TextContainers from './TextContainer';
+import './Tela2.css';
+
+const fakeData = {
+  afirmacoes: `...`,
+  explicacao: `...`,
+};
+
+function Tela2() {
+  const videoId = 'dQw4w9WgXcQ';
+  
+  return (
+    <div className="home-container">
+      <div className="main-content-row">
+        {/* Verifique se a importação e o uso do VideoContainer estão corretos */}
+        <VideoContainer videoId={videoId} />
+        <TextContainers 
+          afirmacoesContent={fakeData.afirmacoes} 
+          explicacaoContent={fakeData.explicacao} 
+        />
+      </div>
+    </div>
+  );
+}
+
+export default Tela2;

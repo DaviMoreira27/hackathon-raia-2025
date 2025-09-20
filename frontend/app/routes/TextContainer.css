@@ -1,0 +1,24 @@
+.text-containers {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Permite que este container ocupe o espaço restante */
+  gap: 20px;
+}
+
+.box-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Faz as duas caixas de texto se dividirem igualmente na altura disponível */
+  padding: 10px;
+  background-color: #161b22;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.box-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #58a6ff;
+  text-align: center;
+}
