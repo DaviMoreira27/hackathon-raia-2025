@@ -27,17 +27,21 @@ export type TranscriptSegment = {
 };
 
 export type FactualMoment = {
-  // canônicos para lógica/seek
   t: number; // segundo inicial (inteiro, arredondado p/ baixo)
   span?: [number, number]; // [start_s, end_s]
-
-  // friendly display
   t_hms: string; // "HH:MM:SS.mmm"
   span_hms?: [string, string]; // ["HH:MM:SS.mmm","HH:MM:SS.mmm"]
-
-  // conteúdo
   quote: string;
   kind: 'quantitative' | 'event' | 'causal' | 'categorical' | 'other';
+};
+
+export type FactContext = {
+  span?: [number, number]; // [start_s, end_s]
+  t_hms: string; // "HH:MM:SS.mmm"
+  quote: string;
+  fonts: string[];
+  confidence: string;
+  synthesis: string;
 };
 
 @Injectable()
@@ -253,5 +257,110 @@ ${joined}`;
       : [];
 
     return moments.sort((a, b) => a.t - b.t);
+  }
+
+  async searchInfoContext(facts: FactualMoment[]): Promise<FactContext[]> {
+    console.log('Facts', facts);
+    // 1) Regras do sistema — agora exigindo span sempre presente
+    const prompt = `
+    Com base na sua base de conhecimento e nas informações mais atualizadas, avalie a veracidade de cada uma das afirmações factuais fornecidas na lista. Para cada item da lista, retorne um objeto JSON no seguinte formato:
+
+    {
+      "span": [start, end], // Os segundos de início e fim da afirmação original, se disponíveis. Se não, use o t_hms.
+      "t_hms": "HH:MM:SS.mmm", // O timestamp original da afirmação.
+      "quote": "A citação exata da afirmação factual.",
+      "confidence": "high" | "medium" | "low" | "unverified", // Seu nível de confiança sobre a veracidade da afirmação.
+      "fonts": string[], // Uma lista de URLs ou nomes de fontes (ex: "Relatório da OMS", "Artigo do New York Times") que corroboram ou contradizem a afirmação. Se não houver, use um array vazio.
+      "synthesis": "Uma síntese concisa do que você encontrou para verificar o fato, incluindo qualquer contexto relevante ou por que a afirmação pode ser falsa ou imprecisa."
+    }
+
+    Assegure-se de que cada objeto na sua resposta corresponda a um dos fatos na lista de entrada, mantendo a ordem original, e de que o JSON seja estritamente um array de objetos. A resposta deve conter APENAS o JSON, sem qualquer texto adicional ou explicação.
+
+    Lista de afirmações factuais a serem verificadas:
+    ${JSON.stringify(facts, null, 2)}
+    `;
+
+    const jsonSchema = {
+      name: 'FactContexts',
+      schema: {
+        type: 'object', // deve ser "object"
+        properties: {
+          facts: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                span: {
+                  type: 'array',
+                  items: { type: 'number' },
+                  minItems: 2,
+                  maxItems: 2,
+                  nullable: true,
+                },
+                t_hms: {
+                  type: 'string',
+                  pattern: '^\\d{2}:\\d{2}:\\d{2}\\.\\d{3}$',
+                },
+                quote: { type: 'string' },
+                confidence: {
+                  type: 'string',
+                  enum: ['high', 'medium', 'low', 'unverified'],
+                },
+                fonts: { type: 'array', items: { type: 'string' } },
+                synthesis: { type: 'string' },
+              },
+              required: [
+                't_hms',
+                'quote',
+                'confidence',
+                'fonts',
+                'synthesis',
+                'span',
+              ],
+            },
+          },
+        },
+        required: ['facts'],
+        additionalProperties: false,
+      },
+      strict: true,
+    } as const;
+
+    const user = `Devolva SOMENTE JSON conforme o schema.
+Texto com timestamps:`;
+
+    const client = await this.getClient();
+
+    const completion = await client.chat.completions.create({
+      model: this.model,
+      temperature: 1,
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content: user },
+      ],
+      response_format: { type: 'json_schema', json_schema: jsonSchema as any },
+    });
+
+    const content = completion.choices?.[0]?.message?.content ?? '{}';
+    console.log('NOOOO', content);
+
+    let parsed: any = {};
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      this.log.warn('Falha ao parsear JSON; retornando lista vazia.');
+      return [];
+    }
+    return (
+      parsed.facts?.map((f) => ({
+        span: f.span ?? [0, 0],
+        t_hms: f.t_hms ?? '00:00:00.000',
+        quote: f.quote ?? '',
+        confidence: f.confidence ?? 'low',
+        fonts: f.fonts ?? [],
+        synthesis: f.synthesis ?? '',
+      })) ?? []
+    );
   }
 }

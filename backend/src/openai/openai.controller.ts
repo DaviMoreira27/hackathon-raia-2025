@@ -6,7 +6,11 @@ import {
   InternalServerErrorException,
   Post,
 } from '@nestjs/common';
-import { OpenaiService, TranscriptSegment } from './openai.service';
+import {
+  FactualMoment,
+  OpenaiService,
+  TranscriptSegment,
+} from './openai.service';
 import { YoutubeService } from 'src/youtube/youtube.service';
 
 interface GetTranscriptBody {
@@ -23,6 +27,29 @@ export class OpenaiController {
   @Get('ping')
   async ping() {
     return { ok: true, reply: await this.svc.ping() };
+  }
+
+  @Post('test/info')
+  async testInfo(@Body() body: { facts: FactualMoment[] }) {
+    // const facts: FactualMoment[] = [
+    //   {
+    //     t: 14400,
+    //     t_hms: '04:00:00.000',
+    //     span: [14400, 28349], // <--- CORRIGIDO: Agora é uma tupla de 2 números
+    //     span_hms: ['04:00:00.000', '07:52:29.000'],
+    //     quote:
+    //       'não tem teto de gasto para financiamento da dívida pública ou seja isso é tirar o povo do orçamento',
+    //     kind: 'categorical',
+    //   },
+    //   // ... (o restante dos objetos)
+    // ];
+
+    // Chame a função passando o array 'facts' como argumento
+    const information = await this.svc.searchInfoContext(body.facts);
+    console.log(information);
+
+    // Exemplo de retorno, ajustado para o novo teste
+    return { information };
   }
 
   // Recebe uma lista plana de segmentos (start,end,text)
