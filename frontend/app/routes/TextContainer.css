@@ -8,12 +8,14 @@
 .box-container {
   display: flex;
   flex-direction: column;
-  flex: 1; /* Faz as duas caixas de texto se dividirem igualmente na altura disponível */
+  flex: 1;
   padding: 10px;
   background-color: #161b22;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  /* garante que os filhos possam crescer */
 }
+
 
 .box-title {
   font-size: 1.2em;

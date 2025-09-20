@@ -1,4 +1,6 @@
 .video-container {
+  flex-basis: 60%;
+  min-width: 300px;
   width: 100%;
   padding-top: 56.25%; /* Proporção 16:9 (altura/largura) */
   position: relative;

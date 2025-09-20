@@ -7,7 +7,7 @@ interface TextContainersProps {
   explicacaoContent: string;
 }
 
-function TextContainers({ afirmacoesContent, explicacaoContent }: TextContainersProps) {
+function TextContainer({ afirmacoesContent, explicacaoContent }: TextContainersProps) {
   return (
     <div className="text-containers">
       <div className="box-container">
@@ -23,4 +23,4 @@ function TextContainers({ afirmacoesContent, explicacaoContent }: TextContainers
   );
 }
 
-export default TextContainers;
+export default TextContainer;
