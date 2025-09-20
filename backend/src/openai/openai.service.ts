@@ -130,51 +130,55 @@ export class OpenaiService {
       )
       .join('\n');
 
-    const system =
-      language === 'pt'
-        ? `Você extrairá APENAS afirmações factuais verificáveis (ex.: números, datas, eventos objetivos, afirmações categóricas) de uma transcrição com timestamps.
+// 1) Regras do sistema — agora exigindo span sempre presente
+const system =
+  language === 'pt'
+    ? `Você extrairá APENAS afirmações factuais verificáveis (ex.: números, datas, eventos objetivos, afirmações categóricas) de uma transcrição com timestamps.
 - Ignore opiniões e juízos de valor.
 - Aponte o segundo inicial (inteiro) quando possível.
+- SEMPRE inclua "span": [start,end] em segundos (números). Se o fim não for claro, use end = start.
 - Seja parcimonioso.`
-        : `You will extract ONLY verifiable factual claims from a timestamped transcript.
+    : `You will extract ONLY verifiable factual claims from a timestamped transcript.
 - Ignore opinions/values.
-- Provide the starting second (integer).
+- Provide the starting second (integer) when possible.
+- ALWAYS include "span": [start,end] in seconds (numbers). If end is unclear, set end = start.
 - Be parsimonious.`;
 
-    // Mantemos o schema pedindo números (mais estável para cálculo)
-    const jsonSchema = {
-      name: 'FactualMoments',
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          moments: {
-            type: 'array',
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              properties: {
-                t: { type: 'number' },
-                quote: { type: 'string' },
-                kind: {
-                  type: 'string',
-                  enum: ['quantitative', 'event', 'causal', 'categorical', 'other'],
-                },
-                span: {
-                  type: 'array',
-                  items: { type: 'number' },
-                  minItems: 2,
-                  maxItems: 2,
-                },
-              },
-              required: ['t', 'quote', 'kind'],
+const jsonSchema = {
+  name: 'FactualMoments',
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      moments: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            t: { type: 'number' },
+            quote: { type: 'string' },
+            kind: {
+              type: 'string',
+              enum: ['quantitative', 'event', 'causal', 'categorical', 'other'],
+            },
+            span: {
+              type: 'array',
+              items: { type: 'number' },
+              minItems: 2,
+              maxItems: 2,
             },
           },
+          
+          required: ['t', 'quote', 'kind', 'span'],
         },
-        required: ['moments'],
       },
-      strict: true,
-    };
+    },
+    required: ['moments'],
+  },
+  strict: true,
+} as const;
+
 
     const user =
       language === 'pt'
@@ -189,7 +193,7 @@ ${joined}`;
 
     const completion = await client.chat.completions.create({
       model: this.model,
-      temperature: 0.1,
+      temperature: 1,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },
@@ -207,31 +211,30 @@ ${joined}`;
     }
 
     const moments: FactualMoment[] = Array.isArray(parsed?.moments)
-      ? parsed.moments.map((m: any) => {
-          // números canônicos
-          const startS = Number(m.span?.[0] ?? m.t ?? 0);
-          const endS   = Number(m.span?.[1] ?? startS);
-          const tInt   = Math.max(0, Math.floor(Number(m.t ?? startS) || 0));
+    ? parsed.moments.map((m: any) => {
+        // números canônicos
+        const tNum   = Number(m.t ?? 0);
+        const startS = Array.isArray(m.span) ? Number(m.span[0]) : tNum;
+        const endS   = Array.isArray(m.span) ? Number(m.span[1]) : startS;
 
-          // strings para exibição
-          const t_hms = this.toHMS(startS, true);
-          const span_hms =
-            Array.isArray(m.span) && m.span.length === 2
-              ? [this.toHMS(startS, true), this.toHMS(endS, true)]
-              : undefined;
+        const tInt   = Math.max(0, Math.floor(Number.isFinite(tNum) ? tNum : startS));
 
-          return {
+        // strings para exibição
+        const t_hms = this.toHMS(startS, true);
+        const span_hms: [string, string] = [this.toHMS(startS, true), this.toHMS(endS, true)];
+
+        return {
             t: tInt,
             t_hms,
-            span: Array.isArray(m.span) && m.span.length === 2 ? [startS, endS] as [number, number] : undefined,
+            span: [startS, endS],
             span_hms,
             quote: String(m.quote || '').slice(0, 400),
             kind: (['quantitative', 'event', 'causal', 'categorical', 'other'].includes(m.kind)
-              ? m.kind
-              : 'other') as FactualMoment['kind'],
-          };
+            ? m.kind
+            : 'other') as FactualMoment['kind'],
+        };
         })
-      : [];
+    : [];
 
     return moments.sort((a, b) => a.t - b.t);
   }

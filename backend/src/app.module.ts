@@ -7,9 +7,8 @@ import { OpenaiModule } from './openai/openai.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [YoutubeModule],
+  imports: [YoutubeModule,ConfigModule.forRoot({ isGlobal: true }), OpenaiModule],
   controllers: [AppController],
   providers: [AppService],
-  imports: [ConfigModule.forRoot({ isGlobal: true }), OpenaiModule],
 })
 export class AppModule {}
