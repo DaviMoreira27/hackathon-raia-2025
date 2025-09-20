@@ -86,12 +86,6 @@ export class YoutubeService {
       );
       const { data: response } = await firstValueFrom(response$);
 
-      console.log(
-        'RESSAO',
-        response.actions[0]?.updateEngagementPanelAction.content
-          .transcriptRenderer.content.transcriptSearchPanelRenderer.body
-          .transcriptSegmentListRenderer.noResultLabel,
-      );
       if (
         !response.actions[0]?.updateEngagementPanelAction.content
           .transcriptRenderer.content.transcriptSearchPanelRenderer.body
